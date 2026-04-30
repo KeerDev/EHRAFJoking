@@ -143,58 +143,23 @@ const maxDeg = d3.max(NODES, d => d.degree);
 const rScale = d3.scaleSqrt().domain([1, maxDeg]).range([8, 16]);
 const nr = d => rScale(d.degree);
 
-/* ── geographic zone definitions ─────────────────────────────────────────── */
-// Zones are placed to roughly mirror Africa's geography.
-// Western gets the most canvas area because it has 14 of the 23 clusters.
-function regionZones() {
-  const p = 16;
-  return {
-    /* Western gets full left half — it holds 14 of 23 clusters */
-    "WesternAfrica":  { x: p,       y: p,       w: W*0.50-2*p, h: H-2*p      },
-    /* Northern: top-centre strip */
-    "NorthernAfrica": { x: W*0.51,  y: p,       w: W*0.28,     h: H*0.27-p   },
-    /* Eastern: right upper block */
-    "EasternAfrica":  { x: W*0.51,  y: H*0.29,  w: W*0.49-p,   h: H*0.40     },
-    /* Central: bottom-centre */
-    "CentralAfrica":  { x: W*0.51,  y: H*0.70,  w: W*0.30,     h: H*0.30-p   },
-    /* Southern: bottom-right corner */
-    "SouthernAfrica": { x: W*0.82,  y: H*0.70,  w: W*0.18-p,   h: H*0.30-p   },
-  };
-}
-
 /* ── zone background + label layer ──────────────────────────────────────── */
 const zoneLayer = root.append("g");
 
-/* drawZones is called AFTER packComps so it can size each ellipse to
-   exactly contain its clusters rather than relying on the zone rectangle. */
 function drawZones() {
   zoneLayer.selectAll("*").remove();
-  const byRegion = {};
-  COMP_REGIONS.forEach((region, cid) => { (byRegion[region] = byRegion[region] || []).push(cid); });
-
-  Object.entries(byRegion).forEach(([region, compIds]) => {
-    const col  = COLORS[region] || "#999";
-    const pts  = compIds.map(cid => compCentroids[cid]).filter(Boolean);
-    if (!pts.length) return;
-
-    const xs   = pts.map(p => p[0]);
-    const ys   = pts.map(p => p[1]);
-    const pad  = Math.max(...compIds.map(c => compR(COMP_SIZES[c]))) + 36;
-    const cx   = (Math.min(...xs) + Math.max(...xs)) / 2;
-    const cy   = (Math.min(...ys) + Math.max(...ys)) / 2;
-    const rx   = Math.max((Math.max(...xs) - Math.min(...xs)) / 2 + pad, pad + 10);
-    const ry   = Math.max((Math.max(...ys) - Math.min(...ys)) / 2 + pad, pad + 10);
-
-    zoneLayer.append("ellipse")
+  Object.entries(regionInfo).forEach(([region, info]) => {
+    const col = COLORS[region] || "#999";
+    zoneLayer.append("circle")
       .attr("class", "zone-bg")
       .attr("data-region", region)
-      .attr("cx", cx).attr("cy", cy)
-      .attr("rx", rx).attr("ry", ry)
+      .attr("cx", info.cx).attr("cy", info.cy)
+      .attr("r",  info.r)
       .attr("fill", col).attr("fill-opacity", .07);
     zoneLayer.append("text")
       .attr("class", "zone-label")
       .attr("data-region", region)
-      .attr("x", cx).attr("y", cy - ry + 18)
+      .attr("x", info.cx).attr("y", info.cy - info.r + 18)
       .attr("text-anchor", "middle")
       .attr("fill", col).attr("fill-opacity", .35)
       .attr("font-size", "10px")
@@ -203,61 +168,80 @@ function drawZones() {
   });
 }
 
-/* ── component packing (zone-aware) ─────────────────────────────────────── */
+/* ── two-level circle packing ────────────────────────────────────────────── */
+/* Level 1: pack clusters within each region using d3.packSiblings            */
+/* Level 2: pack the region blobs against each other so they never overlap    */
 function compR(n) { return Math.max(30, n * 11); }
 
-function packZone(zone, compIds) {
-  /* Shelf-pack clusters within a rectangular zone, sorted largest first. */
-  const gap    = 24;
-  const sorted = [...compIds].sort((a, b) => COMP_SIZES[b] - COMP_SIZES[a]);
-  const rows   = [[]], rowW = [0];
-  sorted.forEach(cid => {
-    const r      = compR(COMP_SIZES[cid]);
-    const needed = 2*r + (rows[rows.length-1].length ? gap : 0);
-    if (rowW[rows.length-1] + needed > zone.w && rows[rows.length-1].length > 0) {
-      rows.push([]); rowW.push(0);
-    }
-    rows[rows.length-1].push(cid);
-    rowW[rows.length-1] += needed;
-  });
+/* Gap added around each region's enclosing circle before region-level pack. */
+const REGION_GAP = 40;
 
-  const rowHeights = rows.map(row => 2 * Math.max(...row.map(cid => compR(COMP_SIZES[cid]))));
-  const totalH     = rowHeights.reduce((s, h) => s+h, 0) + gap*(rows.length-1);
-  const centroids  = {};
-  /* Fix: track the TOP of each row (not centroid), so rows don't drift downward */
-  let rowTop = zone.y + Math.max(0, (zone.h - totalH) / 2);
+/* Preferred draw order controls the spiral when d3.packSiblings runs on
+   region circles — larger regions tend to end up near the centre.
+   Western is biggest (14 clusters) so it goes first.                        */
+const REGION_ORDER = [
+  "WesternAfrica", "EasternAfrica", "NorthernAfrica",
+  "CentralAfrica", "SouthernAfrica"
+];
 
-  rows.forEach((row, ri) => {
-    const rh = rowHeights[ri];
-    const rw = row.reduce((s, cid) => s + 2*compR(COMP_SIZES[cid]), 0) + gap*(row.length-1);
-    let x    = zone.x + Math.max(0, (zone.w - rw) / 2) + compR(COMP_SIZES[row[0]]);
-    row.forEach(cid => {
-      centroids[cid] = [x, rowTop + rh / 2];   /* centroid = row_top + half height */
-      x += 2 * compR(COMP_SIZES[cid]) + gap;
-    });
-    rowTop += rh + gap;
-  });
-  return centroids;
-}
+let compCentroids = {};  /* { compId: [x, y] }          */
+let regionInfo    = {};  /* { region: { cx, cy, r } }   */
 
-function packComps() {
-  const zones = regionZones();
-  /* Group comp ids by their majority region */
+function packAll() {
   const byRegion = {};
   COMP_REGIONS.forEach((region, cid) => {
     (byRegion[region] = byRegion[region] || []).push(cid);
   });
-  const centroids = {};
+
+  /* ── Level 1: pack clusters within each region ── */
+  const regionPacks = {};   /* { region: { circles, enc } } */
   Object.entries(byRegion).forEach(([region, compIds]) => {
-    const zone = zones[region];
-    if (!zone) return;
-    Object.assign(centroids, packZone(zone, compIds));
+    const sorted  = [...compIds].sort((a, b) => COMP_SIZES[b] - COMP_SIZES[a]);
+    const circles = sorted.map(cid => ({ id: cid, r: compR(COMP_SIZES[cid]) + 14 }));
+    d3.packSiblings(circles);
+    const enc = d3.packEnclose(circles);
+    regionPacks[region] = { circles, enc };
   });
-  return centroids;
+
+  /* ── Level 2: pack region blobs so they don't overlap ── */
+  const regionCircles = REGION_ORDER
+    .filter(r => regionPacks[r])
+    .map(r => ({ id: r, r: regionPacks[r].enc.r + REGION_GAP }));
+
+  d3.packSiblings(regionCircles);
+  const totalEnc = d3.packEnclose(regionCircles);
+
+  /* Centre the whole layout on the canvas */
+  const canvasCx = W / 2;
+  const canvasCy = H / 2;
+
+  compCentroids = {};
+  regionInfo    = {};
+
+  regionCircles.forEach(rc => {
+    const pack   = regionPacks[rc.id];
+    const regCx  = canvasCx + rc.x - totalEnc.x;
+    const regCy  = canvasCy + rc.y - totalEnc.y;
+
+    /* Store zone circle (without the gap padding) for drawZones */
+    regionInfo[rc.id] = {
+      cx: regCx,
+      cy: regCy,
+      r:  pack.enc.r + 24   /* 24 px breathing room around cluster group */
+    };
+
+    /* Place each cluster centroid relative to this region's centre */
+    pack.circles.forEach(c => {
+      compCentroids[c.id] = [
+        regCx + c.x - pack.enc.x,
+        regCy + c.y - pack.enc.y
+      ];
+    });
+  });
 }
 
-let compCentroids = packComps();
-drawZones();   /* called here so ellipses are sized from actual centroid positions */
+packAll();
+drawZones();
 
 /* ── pre-position nodes in circles within their component ────────────────── */
 function prePosition() {
@@ -416,7 +400,7 @@ sim.on("end", updateHulls);
 /* ── resize ──────────────────────────────────────────────────────────────── */
 window.addEventListener("resize",()=>{
   W=wrap.clientWidth; H=wrap.clientHeight;
-  compCentroids=packComps();
+  packAll();
   drawZones();
   sim
     .force("x",d3.forceX(d=>compCentroids[d.component][0]).strength(.70))
