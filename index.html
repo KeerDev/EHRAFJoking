@@ -26,7 +26,8 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f0ede6;overflow:h
 svg#g{width:100%;height:100%;cursor:grab}
 svg#g:active{cursor:grabbing}
 
-.zone-bg{fill-opacity:.05;stroke:none}
+.zone-bg{fill-opacity:.05;stroke:none;cursor:grab}
+.zone-bg:active{cursor:grabbing}
 .zone-label{pointer-events:none;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
 
 .hull{fill-opacity:.08;stroke-opacity:.3;stroke-width:1.5px;stroke-dasharray:4 3}
@@ -146,6 +147,84 @@ const nr = d => rScale(d.degree);
 /* ── zone background + label layer ──────────────────────────────────────── */
 const zoneLayer = root.append("g");
 
+/* Redraws a single link path — shared by tick and zone-drag */
+function redrawLink(el, d) {
+  const sx=d.source.x, sy=d.source.y, tx=d.target.x, ty=d.target.y;
+  const ddx=tx-sx, ddy=ty-sy, dist=Math.sqrt(ddx*ddx+ddy*ddy)||1;
+  const rs=nr(d.source)+2, rt=nr(d.target)+2;
+  const x1=sx+(ddx/dist)*rs, y1=sy+(ddy/dist)*rs;
+  const x2=tx-(ddx/dist)*rt, y2=ty-(ddy/dist)*rt;
+  const bend=Math.min(dist*.22,18);
+  const mx=(x1+x2)/2-(ddy/dist)*bend;
+  const my=(y1+y2)/2+(ddx/dist)*bend;
+  d3.select(el).attr("d",`M${x1},${y1} Q${mx},${my} ${x2},${y2}`);
+}
+
+/* ── zone drag — moves an entire region together ─────────────────────────── */
+const zoneDrag = d3.drag()
+  .on("start", function(event) {
+    event.sourceEvent.stopPropagation();   /* prevent zoom/pan while dragging */
+    const region = d3.select(this).attr("data-region");
+    this._zd = { region, ox: event.x, oy: event.y };
+    /* freeze every node in this region so the force sim doesn't fight us */
+    NODES.forEach(d => {
+      if (COMP_REGIONS[d.component] === region) { d.fx = d.x; d.fy = d.y; }
+    });
+    sim.stop();
+  })
+  .on("drag", function(event) {
+    const { region } = this._zd;
+    const dx = event.x - this._zd.ox;
+    const dy = event.y - this._zd.oy;
+    this._zd.ox = event.x;
+    this._zd.oy = event.y;
+
+    /* shift regionInfo */
+    regionInfo[region].cx += dx;
+    regionInfo[region].cy += dy;
+
+    /* shift every cluster centroid belonging to this region */
+    COMP_REGIONS.forEach((r, cid) => {
+      if (r === region && compCentroids[cid]) {
+        compCentroids[cid][0] += dx;
+        compCentroids[cid][1] += dy;
+      }
+    });
+
+    /* shift every node in this region */
+    NODES.forEach(d => {
+      if (COMP_REGIONS[d.component] === region) {
+        d.x += dx; d.y += dy;
+        d.fx = d.x; d.fy = d.y;
+      }
+    });
+
+    /* update zone circle + label IN PLACE (don't call drawZones — that would
+       destroy the element mid-drag and break D3's drag state)              */
+    const info = regionInfo[region];
+    zoneLayer.selectAll(`.zone-bg[data-region="${region}"]`)
+      .attr("cx", info.cx).attr("cy", info.cy);
+    zoneLayer.selectAll(`.zone-label[data-region="${region}"]`)
+      .attr("x", info.cx).attr("y", info.cy - info.r + 18);
+
+    /* update cluster hulls, nodes, and links */
+    updateHulls();
+    nodeSel.attr("transform", d => `translate(${d.x},${d.y})`);
+    linkSel.each(function(d) { redrawLink(this, d); });
+  })
+  .on("end", function() {
+    const { region } = this._zd;
+    /* release pin so nodes can settle */
+    NODES.forEach(d => {
+      if (COMP_REGIONS[d.component] === region) { d.fx = null; d.fy = null; }
+    });
+    /* update force targets to the new positions */
+    sim.force("x", d3.forceX(d => compCentroids[d.component][0]).strength(.70));
+    sim.force("y", d3.forceY(d => compCentroids[d.component][1]).strength(.70));
+    sim.alpha(0.25).restart();
+    delete this._zd;
+  });
+
 function drawZones() {
   zoneLayer.selectAll("*").remove();
   Object.entries(regionInfo).forEach(([region, info]) => {
@@ -155,7 +234,8 @@ function drawZones() {
       .attr("data-region", region)
       .attr("cx", info.cx).attr("cy", info.cy)
       .attr("r",  info.r)
-      .attr("fill", col).attr("fill-opacity", .07);
+      .attr("fill", col).attr("fill-opacity", .07)
+      .call(zoneDrag);   /* ← make each zone circle draggable */
     zoneLayer.append("text")
       .attr("class", "zone-label")
       .attr("data-region", region)
@@ -381,17 +461,7 @@ const sim = d3.forceSimulation(NODES)
 let tickN=0;
 sim.on("tick",()=>{
   tickN++;
-  linkSel.each(function(d){
-    const sx=d.source.x,sy=d.source.y,tx=d.target.x,ty=d.target.y;
-    const dx=tx-sx,dy=ty-sy,dist=Math.sqrt(dx*dx+dy*dy)||1;
-    const rs=nr(d.source)+2, rt=nr(d.target)+2;
-    const x1=sx+(dx/dist)*rs, y1=sy+(dy/dist)*rs;
-    const x2=tx-(dx/dist)*rt, y2=ty-(dy/dist)*rt;
-    const bend=Math.min(dist*.22,18);
-    const mx=(x1+x2)/2-(dy/dist)*bend;
-    const my=(y1+y2)/2+(dx/dist)*bend;
-    d3.select(this).attr("d",`M${x1},${y1} Q${mx},${my} ${x2},${y2}`);
-  });
+  linkSel.each(function(d){ redrawLink(this, d); });
   nodeSel.attr("transform",d=>`translate(${d.x},${d.y})`);
   if(tickN%25===0) updateHulls();
 });
