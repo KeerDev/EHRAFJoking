@@ -6,65 +6,59 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f0ede6;overflow:hidden}
-/* ── header ── */
+
 #hdr{
   display:flex;align-items:center;flex-wrap:wrap;gap:10px 20px;
-  padding:11px 20px;background:#fff;border-bottom:1px solid #ddd;
-  position:relative;z-index:5;
+  padding:11px 20px;background:#fff;border-bottom:1px solid #ddd;z-index:5;position:relative;
 }
 #ttl h2{font-size:16px;font-weight:700;letter-spacing:-.3px;color:#111}
 #ttl .sub{font-size:11px;color:#888;margin-top:2px}
 #fwrap{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-#fwrap > span{font-size:10px;font-weight:700;letter-spacing:.9px;color:#aaa;text-transform:uppercase}
+#fwrap>span{font-size:10px;font-weight:700;letter-spacing:.9px;color:#aaa;text-transform:uppercase}
 #btns{display:flex;gap:7px;flex-wrap:wrap}
 .rbtn{
   padding:4px 13px;border-radius:20px;border:2px solid;
-  font-size:11px;font-weight:600;cursor:pointer;
-  transition:background .15s,color .15s;
+  font-size:11px;font-weight:600;cursor:pointer;transition:background .15s,color .15s;
 }
 .rbtn:hover{filter:brightness(1.08)}
-/* ── canvas ── */
+
 #wrap{position:relative;width:100%;height:calc(100vh - 53px)}
 svg#g{width:100%;height:100%;cursor:grab}
 svg#g:active{cursor:grabbing}
-/* ── links ── */
-.link{stroke-opacity:.55;transition:stroke-opacity .15s,stroke-width .15s}
-.link.lit{stroke-opacity:1 !important;stroke-width:2.5px !important}
-.link.dim{stroke-opacity:.04 !important}
-/* ── nodes ── */
+
+.zone-bg{fill-opacity:.05;stroke:none}
+.zone-label{pointer-events:none;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
+
+.hull{fill-opacity:.08;stroke-opacity:.3;stroke-width:1.5px;stroke-dasharray:4 3}
+
+.link{fill:none;stroke-opacity:.50;transition:stroke-opacity .2s,stroke-width .2s}
+.link.lit{stroke-opacity:1!important;stroke-width:3px!important}
+.link.dim{stroke-opacity:.05!important}
+
 .ngrp{cursor:pointer}
 .ngrp circle{stroke-width:2;transition:opacity .15s}
-.ngrp text{pointer-events:none;font-weight:700}
+.ngrp text{pointer-events:none;font-weight:600}
 .ngrp.dim circle,.ngrp.dim text{opacity:.1}
-/* ── tooltip ── */
+
 #tip{
   position:absolute;display:none;pointer-events:none;
   background:rgba(255,255,255,.97);border:1px solid #ccc;border-radius:7px;
   padding:8px 12px;font-size:12px;box-shadow:0 2px 10px rgba(0,0,0,.13);
-  max-width:220px;z-index:20;line-height:1.4;
+  max-width:220px;z-index:20;line-height:1.5;
 }
 #tip b{display:block;margin-bottom:2px;font-size:13px;color:#111}
 #tip span{color:#666;font-size:11px}
-/* ── legend ── */
+
 #leg{
   position:absolute;bottom:14px;left:14px;
   background:rgba(255,255,255,.93);border:1px solid #ddd;
   border-radius:8px;padding:11px 14px;font-size:11px;
-  box-shadow:0 1px 6px rgba(0,0,0,.08);line-height:1.5;
+  box-shadow:0 1px 6px rgba(0,0,0,.08);line-height:1.6;
 }
 #leg h4{font-size:9.5px;text-transform:uppercase;letter-spacing:.9px;color:#aaa;margin-bottom:8px}
-.li{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.li{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .li:last-child{margin-bottom:0}
-.dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.18)}
-.arrsym{font-size:13px;color:#555;line-height:1;letter-spacing:-2px}
-.grey{color:#999;font-size:10px;max-width:140px}
-/* ── instructions ── */
-#instr{
-  position:absolute;bottom:14px;right:14px;
-  background:rgba(255,255,255,.88);border:1px solid #ddd;
-  border-radius:8px;padding:9px 13px;font-size:10.5px;color:#777;
-  box-shadow:0 1px 6px rgba(0,0,0,.07);line-height:1.7;
-}
+.dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.18)}
 </style>
 </head>
 <body>
@@ -83,56 +77,54 @@ svg#g:active{cursor:grabbing}
 <div id="wrap">
   <svg id="g"></svg>
   <div id="tip"></div>
-
   <div id="leg">
     <h4>Legend</h4>
-    <div class="li"><div class="dot" style="background:#3A7DBF"></div>Ethnic group</div>
-    <div class="li"><span class="arrsym">&#8646;</span>Mutual joking relation</div>
-    <div class="li grey">Node size ∝ number of joking partners</div>
+    <div class="li">
+      <span style="display:inline-block;width:20px;height:2px;background:#888;border-radius:1px"></span>
+      Mutual joking relation
+    </div>
+    <div class="li">
+      <span style="display:inline-block;width:20px;height:14px;border-radius:4px;
+                   background:rgba(0,0,0,.06);border:1.5px dashed #aaa"></span>
+      Joking cluster
+    </div>
+    <div class="li" style="color:#999;font-size:10px;max-width:150px">
+      Node size ∝ number of joking partners
+    </div>
   </div>
-  <!--
-  <div id="instr">
-    <b style="color:#555;font-size:11px">Interact</b><br>
-    Click a node → highlight its partners<br>
-    Click again or background → deselect<br>
-    Drag nodes · Scroll / pinch to zoom
-  </div>
-    --!>
 </div>
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
-/* ── data (injected by Python) ─────────────────────────────────────────────── */
-const NODES   = [{"id": " Katsina", "region": "WesternAfrica", "degree": 1}, {"id": "Abangombi", "region": "CentralAfrica", "degree": 4}, {"id": "Abanvra", "region": "CentralAfrica", "degree": 3}, {"id": "Abauura", "region": "CentralAfrica", "degree": 1}, {"id": "Adar", "region": "WesternAfrica", "degree": 1}, {"id": "Agiti", "region": "CentralAfrica", "degree": 3}, {"id": "Akalinga", "region": "CentralAfrica", "degree": 3}, {"id": "Arewa", "region": "WesternAfrica", "degree": 1}, {"id": "Ashanti", "region": "WesternAfrica", "degree": 1}, {"id": "Aġuh-en-tehlé", "region": "NorthernAfrica", "degree": 2}, {"id": "Ba'ari", "region": "WesternAfrica", "degree": 1}, {"id": "Baduwari", "region": "WesternAfrica", "degree": 1}, {"id": "Bagobiri", "region": "WesternAfrica", "degree": 2}, {"id": "Bakatsine", "region": "WesternAfrica", "degree": 1}, {"id": "Bambara", "region": "WesternAfrica", "degree": 2}, {"id": "Baribari", "region": "WesternAfrica", "degree": 3}, {"id": "Ba’adare", "region": "WesternAfrica", "degree": 2}, {"id": "Ba’are", "region": "WesternAfrica", "degree": 1}, {"id": "Bornu", "region": "WesternAfrica", "degree": 1}, {"id": "Bozo", "region": "WesternAfrica", "degree": 3}, {"id": "Chagga", "region": "EasternAfrica", "degree": 2}, {"id": "Degal", "region": "WesternAfrica", "degree": 1}, {"id": "Dime", "region": "EasternAfrica", "degree": 1}, {"id": "Dizi", "region": "EasternAfrica", "degree": 1}, {"id": "Dogon", "region": "WesternAfrica", "degree": 2}, {"id": "Dukawa", "region": "WesternAfrica", "degree": 1}, {"id": "Fulani", "region": "WesternAfrica", "degree": 5}, {"id": "Gobir", "region": "WesternAfrica", "degree": 2}, {"id": "Gorogo", "region": "WesternAfrica", "degree": 1}, {"id": "Gundaat", "region": "WesternAfrica", "degree": 1}, {"id": "Gurage", "region": "EasternAfrica", "degree": 1}, {"id": "Gwari", "region": "WesternAfrica", "degree": 1}, {"id": "Hausa", "region": "WesternAfrica", "degree": 1}, {"id": "Irawatten", "region": "NorthernAfrica", "degree": 1}, {"id": "Ise□emaren tribes", "region": "NorthernAfrica", "degree": 1}, {"id": "Ishaza", "region": "CentralAfrica", "degree": 1}, {"id": "Jola", "region": "WesternAfrica", "degree": 1}, {"id": "Kamberi", "region": "WesternAfrica", "degree": 1}, {"id": "Kanuri", "region": "WesternAfrica", "degree": 2}, {"id": "Kel Azel", "region": "NorthernAfrica", "degree": 1}, {"id": "Konso", "region": "EasternAfrica", "degree": 1}, {"id": "Kpata'ar", "region": "WesternAfrica", "degree": 1}, {"id": "Lozi", "region": "SouthernAfrica", "degree": 1}, {"id": "Luguru", "region": "EasternAfrica", "degree": 5}, {"id": "Maasai", "region": "EasternAfrica", "degree": 2}, {"id": "Macha Oromo", "region": "EasternAfrica", "degree": 1}, {"id": "Mbiriri", "region": "CentralAfrica", "degree": 1}, {"id": "Mbunga", "region": "EasternAfrica", "degree": 2}, {"id": "Mogho", "region": "WesternAfrica", "degree": 1}, {"id": "Mossi", "region": "WesternAfrica", "degree": 2}, {"id": "Ngoni", "region": "EasternAfrica", "degree": 1}, {"id": "Nyakyusa", "region": "EasternAfrica", "degree": 1}, {"id": "Nyamwezi", "region": "EasternAfrica", "degree": 1}, {"id": "Nzima", "region": "WesternAfrica", "degree": 1}, {"id": "Okiek", "region": "EasternAfrica", "degree": 1}, {"id": "Pogoro", "region": "EasternAfrica", "degree": 1}, {"id": "Sakpee", "region": "WesternAfrica", "degree": 1}, {"id": "Samiit", "region": "WesternAfrica", "degree": 1}, {"id": "San", "region": "WesternAfrica", "degree": 2}, {"id": "Serer", "region": "WesternAfrica", "degree": 1}, {"id": "Somono", "region": "WesternAfrica", "degree": 1}, {"id": "Sukuma", "region": "EasternAfrica", "degree": 1}, {"id": "Taita", "region": "EasternAfrica", "degree": 1}, {"id": "Talis", "region": "WesternAfrica", "degree": 1}, {"id": "Tallensi", "region": "WesternAfrica", "degree": 1}, {"id": "Tiv", "region": "WesternAfrica", "degree": 1}, {"id": "Tonga", "region": "SouthernAfrica", "degree": 1}, {"id": "Torrobo", "region": "EasternAfrica", "degree": 1}, {"id": "Wakii", "region": "WesternAfrica", "degree": 1}, {"id": "Wamangi", "region": "EasternAfrica", "degree": 1}, {"id": "Watta", "region": "EasternAfrica", "degree": 6}, {"id": "WoDaaBe", "region": "WesternAfrica", "degree": 2}, {"id": "Yarse", "region": "WesternAfrica", "degree": 1}, {"id": "Zaramo", "region": "EasternAfrica", "degree": 1}, {"id": "Zubiuŋ", "region": "WesternAfrica", "degree": 2}, {"id": "noble Kel □ela Tuareg", "region": "NorthernAfrica", "degree": 1}];
-const LINKS   = [{"source": "Abanvra", "target": "Abangombi", "region": "CentralAfrica"}, {"source": "Abauura", "target": "Abangombi", "region": "CentralAfrica"}, {"source": "Arewa", "target": "Adar", "region": "WesternAfrica"}, {"source": "Abangombi", "target": "Agiti", "region": "CentralAfrica"}, {"source": "Abanvra", "target": "Agiti", "region": "CentralAfrica"}, {"source": "Akalinga", "target": "Agiti", "region": "CentralAfrica"}, {"source": "Abangombi", "target": "Akalinga", "region": "CentralAfrica"}, {"source": "Abanvra", "target": "Akalinga", "region": "CentralAfrica"}, {"source": "Ba’are", "target": "Ba’adare", "region": "WesternAfrica"}, {"source": "Baribari", "target": "Ba’adare", "region": "WesternAfrica"}, {"source": "Baduwari", "target": "Bagobiri", "region": "WesternAfrica"}, {"source": "Bakatsine", "target": "Bagobiri", "region": "WesternAfrica"}, {"source": "Bambara", "target": "Bozo", "region": "WesternAfrica"}, {"source": "Watta", "target": "Dime", "region": "EasternAfrica"}, {"source": "Watta", "target": "Dizi", "region": "EasternAfrica"}, {"source": "Bambara", "target": "Dogon", "region": "WesternAfrica"}, {"source": "Bozo", "target": "Dogon", "region": "WesternAfrica"}, {"source": "Baribari", "target": "Fulani", "region": "WesternAfrica"}, {"source": "Bornu", "target": "Fulani", "region": "WesternAfrica"}, {"source": "Tiv", "target": "Fulani", "region": "WesternAfrica"}, {"source": " Katsina", "target": "Gobir", "region": "WesternAfrica"}, {"source": "Ba'ari", "target": "Gorogo", "region": "WesternAfrica"}, {"source": "Zubiuŋ", "target": "Gundaat", "region": "WesternAfrica"}, {"source": "Watta", "target": "Gurage", "region": "EasternAfrica"}, {"source": "Fulani", "target": "Hausa", "region": "WesternAfrica"}, {"source": "Aġuh-en-tehlé", "target": "Ise□emaren tribes", "region": "NorthernAfrica"}, {"source": "Dukawa", "target": "Kamberi", "region": "WesternAfrica"}, {"source": "WoDaaBe", "target": "Kanuri", "region": "WesternAfrica"}, {"source": "Fulani", "target": "Kanuri", "region": "WesternAfrica"}, {"source": "Irawatten", "target": "Kel Azel", "region": "NorthernAfrica"}, {"source": "Watta", "target": "Konso", "region": "EasternAfrica"}, {"source": "Tonga", "target": "Lozi", "region": "SouthernAfrica"}, {"source": "Okiek", "target": "Maasai", "region": "EasternAfrica"}, {"source": "Watta", "target": "Macha Oromo", "region": "EasternAfrica"}, {"source": "Gwari", "target": "Gobir", "region": "WesternAfrica"}, {"source": "Chagga", "target": "Maasai", "region": "EasternAfrica"}, {"source": "Ishaza", "target": "Mbiriri", "region": "CentralAfrica"}, {"source": "Luguru", "target": "Mbunga", "region": "EasternAfrica"}, {"source": "Nyakyusa", "target": "Ngoni", "region": "EasternAfrica"}, {"source": "Aġuh-en-tehlé", "target": "noble Kel □ela Tuareg", "region": "NorthernAfrica"}, {"source": "Luguru", "target": "Nyamwezi", "region": "EasternAfrica"}, {"source": "Ashanti", "target": "Nzima", "region": "WesternAfrica"}, {"source": "Luguru", "target": "Pogoro", "region": "EasternAfrica"}, {"source": "Zubiuŋ", "target": "Sakpee", "region": "WesternAfrica"}, {"source": "Degal", "target": "Samiit", "region": "WesternAfrica"}, {"source": "Mogho", "target": "San", "region": "WesternAfrica"}, {"source": "Mossi", "target": "San", "region": "WesternAfrica"}, {"source": "Jola", "target": "Serer", "region": "WesternAfrica"}, {"source": "Bozo", "target": "Somono", "region": "WesternAfrica"}, {"source": "Chagga", "target": "Taita", "region": "EasternAfrica"}, {"source": "Tallensi", "target": "Talis", "region": "WesternAfrica"}, {"source": "Watta", "target": "Torrobo", "region": "EasternAfrica"}, {"source": "Luguru", "target": "Sukuma", "region": "EasternAfrica"}, {"source": "Kpata'ar", "target": "Wakii", "region": "WesternAfrica"}, {"source": "Wamangi", "target": "Mbunga", "region": "EasternAfrica"}, {"source": "Baribari", "target": "WoDaaBe", "region": "WesternAfrica"}, {"source": "Mossi", "target": "Yarse", "region": "WesternAfrica"}, {"source": "Luguru", "target": "Zaramo", "region": "EasternAfrica"}];
-const COLORS  = {"WesternAfrica": "#3A7DBF", "EasternAfrica": "#45A05C", "CentralAfrica": "#D97226", "NorthernAfrica": "#8B5EA8", "SouthernAfrica": "#2BAAB0"};
-const REGIONS = ["CentralAfrica", "EasternAfrica", "NorthernAfrica", "SouthernAfrica", "WesternAfrica"];
+/* ── injected data ───────────────────────────────────────────────────────── */
+const NODES       = [{"id": " Katsina", "region": "WesternAfrica", "degree": 1, "component": 7}, {"id": "Abangombi", "region": "CentralAfrica", "degree": 4, "component": 3}, {"id": "Abanvra", "region": "CentralAfrica", "degree": 3, "component": 3}, {"id": "Abauura", "region": "CentralAfrica", "degree": 1, "component": 3}, {"id": "Adar", "region": "WesternAfrica", "degree": 1, "component": 11}, {"id": "Agiti", "region": "CentralAfrica", "degree": 3, "component": 3}, {"id": "Akalinga", "region": "CentralAfrica", "degree": 3, "component": 3}, {"id": "Arewa", "region": "WesternAfrica", "degree": 1, "component": 11}, {"id": "Ashanti", "region": "WesternAfrica", "degree": 1, "component": 18}, {"id": "Aġuh-en-tehlé", "region": "NorthernAfrica", "degree": 2, "component": 9}, {"id": "Ba'ari", "region": "WesternAfrica", "degree": 1, "component": 12}, {"id": "Baduwari", "region": "WesternAfrica", "degree": 1, "component": 6}, {"id": "Bagobiri", "region": "WesternAfrica", "degree": 2, "component": 6}, {"id": "Bakatsine", "region": "WesternAfrica", "degree": 1, "component": 6}, {"id": "Bambara", "region": "WesternAfrica", "degree": 2, "component": 4}, {"id": "Baribari", "region": "WesternAfrica", "degree": 3, "component": 0}, {"id": "Ba’adare", "region": "WesternAfrica", "degree": 2, "component": 0}, {"id": "Ba’are", "region": "WesternAfrica", "degree": 1, "component": 0}, {"id": "Bornu", "region": "WesternAfrica", "degree": 1, "component": 0}, {"id": "Bozo", "region": "WesternAfrica", "degree": 3, "component": 4}, {"id": "Chagga", "region": "EasternAfrica", "degree": 2, "component": 5}, {"id": "Degal", "region": "WesternAfrica", "degree": 1, "component": 19}, {"id": "Dime", "region": "EasternAfrica", "degree": 1, "component": 1}, {"id": "Dizi", "region": "EasternAfrica", "degree": 1, "component": 1}, {"id": "Dogon", "region": "WesternAfrica", "degree": 2, "component": 4}, {"id": "Dukawa", "region": "WesternAfrica", "degree": 1, "component": 13}, {"id": "Fulani", "region": "WesternAfrica", "degree": 5, "component": 0}, {"id": "Gobir", "region": "WesternAfrica", "degree": 2, "component": 7}, {"id": "Gorogo", "region": "WesternAfrica", "degree": 1, "component": 12}, {"id": "Gundaat", "region": "WesternAfrica", "degree": 1, "component": 8}, {"id": "Gurage", "region": "EasternAfrica", "degree": 1, "component": 1}, {"id": "Gwari", "region": "WesternAfrica", "degree": 1, "component": 7}, {"id": "Hausa", "region": "WesternAfrica", "degree": 1, "component": 0}, {"id": "Irawatten", "region": "NorthernAfrica", "degree": 1, "component": 14}, {"id": "Ise□emaren tribes", "region": "NorthernAfrica", "degree": 1, "component": 9}, {"id": "Ishaza", "region": "CentralAfrica", "degree": 1, "component": 16}, {"id": "Jola", "region": "WesternAfrica", "degree": 1, "component": 20}, {"id": "Kamberi", "region": "WesternAfrica", "degree": 1, "component": 13}, {"id": "Kanuri", "region": "WesternAfrica", "degree": 2, "component": 0}, {"id": "Kel Azel", "region": "NorthernAfrica", "degree": 1, "component": 14}, {"id": "Konso", "region": "EasternAfrica", "degree": 1, "component": 1}, {"id": "Kpata'ar", "region": "WesternAfrica", "degree": 1, "component": 22}, {"id": "Lozi", "region": "SouthernAfrica", "degree": 1, "component": 15}, {"id": "Luguru", "region": "EasternAfrica", "degree": 5, "component": 2}, {"id": "Maasai", "region": "EasternAfrica", "degree": 2, "component": 5}, {"id": "Macha Oromo", "region": "EasternAfrica", "degree": 1, "component": 1}, {"id": "Mbiriri", "region": "CentralAfrica", "degree": 1, "component": 16}, {"id": "Mbunga", "region": "EasternAfrica", "degree": 2, "component": 2}, {"id": "Mossi", "region": "WesternAfrica", "degree": 2, "component": 10}, {"id": "Ngoni", "region": "EasternAfrica", "degree": 1, "component": 17}, {"id": "Nyakyusa", "region": "EasternAfrica", "degree": 1, "component": 17}, {"id": "Nyamwezi", "region": "EasternAfrica", "degree": 1, "component": 2}, {"id": "Nzima", "region": "WesternAfrica", "degree": 1, "component": 18}, {"id": "Okiek", "region": "EasternAfrica", "degree": 1, "component": 5}, {"id": "Pogoro", "region": "EasternAfrica", "degree": 1, "component": 2}, {"id": "Sakpee", "region": "WesternAfrica", "degree": 1, "component": 8}, {"id": "Samiit", "region": "WesternAfrica", "degree": 1, "component": 19}, {"id": "San", "region": "WesternAfrica", "degree": 1, "component": 10}, {"id": "Serer", "region": "WesternAfrica", "degree": 1, "component": 20}, {"id": "Somono", "region": "WesternAfrica", "degree": 1, "component": 4}, {"id": "Sukuma", "region": "EasternAfrica", "degree": 1, "component": 2}, {"id": "Taita", "region": "EasternAfrica", "degree": 1, "component": 5}, {"id": "Talis", "region": "WesternAfrica", "degree": 1, "component": 21}, {"id": "Tallensi", "region": "WesternAfrica", "degree": 1, "component": 21}, {"id": "Tiv", "region": "WesternAfrica", "degree": 1, "component": 0}, {"id": "Tonga", "region": "SouthernAfrica", "degree": 1, "component": 15}, {"id": "Torrobo", "region": "EasternAfrica", "degree": 1, "component": 1}, {"id": "Wakii", "region": "WesternAfrica", "degree": 1, "component": 22}, {"id": "Wamangi", "region": "EasternAfrica", "degree": 1, "component": 2}, {"id": "Watta", "region": "EasternAfrica", "degree": 6, "component": 1}, {"id": "WoDaaBe", "region": "WesternAfrica", "degree": 2, "component": 0}, {"id": "Yarse", "region": "WesternAfrica", "degree": 1, "component": 10}, {"id": "Zaramo", "region": "EasternAfrica", "degree": 1, "component": 2}, {"id": "Zubiuŋ", "region": "WesternAfrica", "degree": 2, "component": 8}, {"id": "noble Kel □ela Tuareg", "region": "NorthernAfrica", "degree": 1, "component": 9}];
+const LINKS       = [{"source": "Abanvra", "target": "Abangombi", "region": "CentralAfrica"}, {"source": "Abauura", "target": "Abangombi", "region": "CentralAfrica"}, {"source": "Arewa", "target": "Adar", "region": "WesternAfrica"}, {"source": "Abangombi", "target": "Agiti", "region": "CentralAfrica"}, {"source": "Abanvra", "target": "Agiti", "region": "CentralAfrica"}, {"source": "Akalinga", "target": "Agiti", "region": "CentralAfrica"}, {"source": "Abangombi", "target": "Akalinga", "region": "CentralAfrica"}, {"source": "Abanvra", "target": "Akalinga", "region": "CentralAfrica"}, {"source": "Ba’are", "target": "Ba’adare", "region": "WesternAfrica"}, {"source": "Baribari", "target": "Ba’adare", "region": "WesternAfrica"}, {"source": "Baduwari", "target": "Bagobiri", "region": "WesternAfrica"}, {"source": "Bakatsine", "target": "Bagobiri", "region": "WesternAfrica"}, {"source": "Bambara", "target": "Bozo", "region": "WesternAfrica"}, {"source": "Watta", "target": "Dime", "region": "EasternAfrica"}, {"source": "Watta", "target": "Dizi", "region": "EasternAfrica"}, {"source": "Bambara", "target": "Dogon", "region": "WesternAfrica"}, {"source": "Bozo", "target": "Dogon", "region": "WesternAfrica"}, {"source": "Baribari", "target": "Fulani", "region": "WesternAfrica"}, {"source": "Bornu", "target": "Fulani", "region": "WesternAfrica"}, {"source": "Tiv", "target": "Fulani", "region": "WesternAfrica"}, {"source": " Katsina", "target": "Gobir", "region": "WesternAfrica"}, {"source": "Ba'ari", "target": "Gorogo", "region": "WesternAfrica"}, {"source": "Zubiuŋ", "target": "Gundaat", "region": "WesternAfrica"}, {"source": "Watta", "target": "Gurage", "region": "EasternAfrica"}, {"source": "Fulani", "target": "Hausa", "region": "WesternAfrica"}, {"source": "Aġuh-en-tehlé", "target": "Ise□emaren tribes", "region": "NorthernAfrica"}, {"source": "Dukawa", "target": "Kamberi", "region": "WesternAfrica"}, {"source": "WoDaaBe", "target": "Kanuri", "region": "WesternAfrica"}, {"source": "Fulani", "target": "Kanuri", "region": "WesternAfrica"}, {"source": "Irawatten", "target": "Kel Azel", "region": "NorthernAfrica"}, {"source": "Watta", "target": "Konso", "region": "EasternAfrica"}, {"source": "Tonga", "target": "Lozi", "region": "SouthernAfrica"}, {"source": "Okiek", "target": "Maasai", "region": "EasternAfrica"}, {"source": "Watta", "target": "Macha Oromo", "region": "EasternAfrica"}, {"source": "Gwari", "target": "Gobir", "region": "WesternAfrica"}, {"source": "Chagga", "target": "Maasai", "region": "EasternAfrica"}, {"source": "Ishaza", "target": "Mbiriri", "region": "CentralAfrica"}, {"source": "Luguru", "target": "Mbunga", "region": "EasternAfrica"}, {"source": "Nyakyusa", "target": "Ngoni", "region": "EasternAfrica"}, {"source": "Aġuh-en-tehlé", "target": "noble Kel □ela Tuareg", "region": "NorthernAfrica"}, {"source": "Luguru", "target": "Nyamwezi", "region": "EasternAfrica"}, {"source": "Ashanti", "target": "Nzima", "region": "WesternAfrica"}, {"source": "Luguru", "target": "Pogoro", "region": "EasternAfrica"}, {"source": "Zubiuŋ", "target": "Sakpee", "region": "WesternAfrica"}, {"source": "Degal", "target": "Samiit", "region": "WesternAfrica"}, {"source": "Mossi", "target": "San", "region": "WesternAfrica"}, {"source": "Jola", "target": "Serer", "region": "WesternAfrica"}, {"source": "Bozo", "target": "Somono", "region": "WesternAfrica"}, {"source": "Chagga", "target": "Taita", "region": "EasternAfrica"}, {"source": "Tallensi", "target": "Talis", "region": "WesternAfrica"}, {"source": "Watta", "target": "Torrobo", "region": "EasternAfrica"}, {"source": "Luguru", "target": "Sukuma", "region": "EasternAfrica"}, {"source": "Kpata'ar", "target": "Wakii", "region": "WesternAfrica"}, {"source": "Wamangi", "target": "Mbunga", "region": "EasternAfrica"}, {"source": "Baribari", "target": "WoDaaBe", "region": "WesternAfrica"}, {"source": "Mossi", "target": "Yarse", "region": "WesternAfrica"}, {"source": "Luguru", "target": "Zaramo", "region": "EasternAfrica"}];
+const COLORS      = {"WesternAfrica": "#3A7DBF", "EasternAfrica": "#45A05C", "CentralAfrica": "#D97226", "NorthernAfrica": "#8B5EA8", "SouthernAfrica": "#2BAAB0"};
+const REGIONS     = ["CentralAfrica", "EasternAfrica", "NorthernAfrica", "SouthernAfrica", "WesternAfrica"];
+const COMP_SIZES  = [9, 7, 7, 5, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];    // [size0, size1, …] largest first
+const COMP_REGIONS= ["WesternAfrica", "EasternAfrica", "EasternAfrica", "CentralAfrica", "WesternAfrica", "EasternAfrica", "WesternAfrica", "WesternAfrica", "WesternAfrica", "NorthernAfrica", "WesternAfrica", "WesternAfrica", "WesternAfrica", "WesternAfrica", "NorthernAfrica", "SouthernAfrica", "CentralAfrica", "EasternAfrica", "WesternAfrica", "WesternAfrica", "WesternAfrica", "WesternAfrica", "WesternAfrica"];  // [region0, region1, …]
 
-/* ── subtitle ─────────────────────────────────────────────────────────────── */
 document.getElementById("sub").textContent =
-  `${NODES.length} ethnic groups · ${LINKS.length} joking relations · ${REGIONS.length} regions`;
+  `${NODES.length} ethnic groups · ${LINKS.length} joking relations · ${COMP_SIZES.length} clusters`;
 
-/* ── region filter state ─────────────────────────────────────────────────── */
+/* ── region filter ───────────────────────────────────────────────────────── */
 const active = new Set(REGIONS);
-
-/* ── filter buttons ──────────────────────────────────────────────────────── */
 const btnsDiv = document.getElementById("btns");
 REGIONS.forEach(r => {
   const btn = document.createElement("button");
   btn.className = "rbtn";
   btn.textContent = r.replace(/([A-Z])/g," $1").trim();
   btn.dataset.r = r;
-  applyBtnStyle(btn, true);
+  styleBtn(btn, true);
   btn.onclick = () => {
     const wasOn = active.has(r);
     wasOn ? active.delete(r) : active.add(r);
-    applyBtnStyle(btn, !wasOn);
-    refreshVisibility();
+    styleBtn(btn, !wasOn);
+    refreshVis();
   };
   btnsDiv.appendChild(btn);
 });
-
-function applyBtnStyle(btn, on) {
+function styleBtn(btn, on) {
   const c = COLORS[btn.dataset.r] || "#999";
   btn.style.borderColor = c;
   btn.style.background  = on ? c : "#fff";
@@ -143,102 +135,184 @@ function applyBtnStyle(btn, on) {
 const svg  = d3.select("#g");
 const wrap = document.getElementById("wrap");
 let W = wrap.clientWidth, H = wrap.clientHeight;
-
 const root = svg.append("g");
-svg.call(
-  d3.zoom().scaleExtent([.2, 6])
-    .on("zoom", e => root.attr("transform", e.transform))
-);
+svg.call(d3.zoom().scaleExtent([.15, 6]).on("zoom", e => root.attr("transform", e.transform)));
 
-/* ── Arrow markers (per region, end + start-reversed) ───────────────────── */
-const defs = svg.append("defs");
-Object.entries(COLORS).forEach(([region, color]) => {
-  const rid = region.replace(/[^a-z0-9]/gi, "_");
-
-  defs.append("marker")
-    .attr("id", "ae_" + rid)
-    .attr("viewBox", "0 -5 10 10").attr("refX", 9).attr("refY", 0)
-    .attr("markerWidth", 5).attr("markerHeight", 5).attr("orient", "auto")
-    .append("path").attr("d", "M0,-4.5L9,0L0,4.5").attr("fill", color);
-
-  defs.append("marker")
-    .attr("id", "as_" + rid)
-    .attr("viewBox", "0 -5 10 10").attr("refX", 1).attr("refY", 0)
-    .attr("markerWidth", 5).attr("markerHeight", 5).attr("orient", "auto-start-reverse")
-    .append("path").attr("d", "M0,-4.5L9,0L0,4.5").attr("fill", color);
-});
-
-/* ── Node radius scaled by degree ────────────────────────────────────────── */
+/* ── node radius ─────────────────────────────────────────────────────────── */
 const maxDeg = d3.max(NODES, d => d.degree);
-const rScale = d3.scaleSqrt().domain([1, maxDeg]).range([9, 17]);
+const rScale = d3.scaleSqrt().domain([1, maxDeg]).range([8, 16]);
 const nr = d => rScale(d.degree);
 
-/* ── Region centroid positions (geographic approximation) ────────────────── */
-function regionCenters() {
+/* ── geographic zone definitions ─────────────────────────────────────────── */
+// Zones are placed to roughly mirror Africa's geography.
+// Western gets the most canvas area because it has 14 of the 23 clusters.
+function regionZones() {
+  const p = 16;
   return {
-    "NorthernAfrica": [W * 0.50, H * 0.14],
-    "WesternAfrica":  [W * 0.22, H * 0.50],
-    "CentralAfrica":  [W * 0.46, H * 0.58],
-    "EasternAfrica":  [W * 0.74, H * 0.44],
-    "SouthernAfrica": [W * 0.68, H * 0.80],
+    /* Western gets full left half — it holds 14 of 23 clusters */
+    "WesternAfrica":  { x: p,       y: p,       w: W*0.50-2*p, h: H-2*p      },
+    /* Northern: top-centre strip */
+    "NorthernAfrica": { x: W*0.51,  y: p,       w: W*0.28,     h: H*0.27-p   },
+    /* Eastern: right upper block */
+    "EasternAfrica":  { x: W*0.51,  y: H*0.29,  w: W*0.49-p,   h: H*0.40     },
+    /* Central: bottom-centre */
+    "CentralAfrica":  { x: W*0.51,  y: H*0.70,  w: W*0.30,     h: H*0.30-p   },
+    /* Southern: bottom-right corner */
+    "SouthernAfrica": { x: W*0.82,  y: H*0.70,  w: W*0.18-p,   h: H*0.30-p   },
   };
 }
 
-/* ── Background region labels ────────────────────────────────────────────── */
-const bgLayer = root.append("g").attr("class", "bg-labels");
-function drawBgLabels() {
-  bgLayer.selectAll("text").remove();
-  const rc = regionCenters();
-  Object.entries(rc).forEach(([region, [cx, cy]]) => {
-    bgLayer.append("text")
-      .attr("x", cx).attr("y", cy)
+/* ── zone background + label layer ──────────────────────────────────────── */
+const zoneLayer = root.append("g");
+
+/* drawZones is called AFTER packComps so it can size each ellipse to
+   exactly contain its clusters rather than relying on the zone rectangle. */
+function drawZones() {
+  zoneLayer.selectAll("*").remove();
+  const byRegion = {};
+  COMP_REGIONS.forEach((region, cid) => { (byRegion[region] = byRegion[region] || []).push(cid); });
+
+  Object.entries(byRegion).forEach(([region, compIds]) => {
+    const col  = COLORS[region] || "#999";
+    const pts  = compIds.map(cid => compCentroids[cid]).filter(Boolean);
+    if (!pts.length) return;
+
+    const xs   = pts.map(p => p[0]);
+    const ys   = pts.map(p => p[1]);
+    const pad  = Math.max(...compIds.map(c => compR(COMP_SIZES[c]))) + 36;
+    const cx   = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const cy   = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const rx   = Math.max((Math.max(...xs) - Math.min(...xs)) / 2 + pad, pad + 10);
+    const ry   = Math.max((Math.max(...ys) - Math.min(...ys)) / 2 + pad, pad + 10);
+
+    zoneLayer.append("ellipse")
+      .attr("class", "zone-bg")
+      .attr("data-region", region)
+      .attr("cx", cx).attr("cy", cy)
+      .attr("rx", rx).attr("ry", ry)
+      .attr("fill", col).attr("fill-opacity", .07);
+    zoneLayer.append("text")
+      .attr("class", "zone-label")
+      .attr("data-region", region)
+      .attr("x", cx).attr("y", cy - ry + 18)
       .attr("text-anchor", "middle")
-      .attr("fill", COLORS[region] || "#999")
-      .attr("opacity", 0.09)
-      .attr("font-size", "52px")
-      .attr("font-weight", "800")
+      .attr("fill", col).attr("fill-opacity", .35)
+      .attr("font-size", "10px")
       .attr("font-family", "'Helvetica Neue',Arial,sans-serif")
-      .attr("letter-spacing", "2px")
       .text(region.replace(/([A-Z])/g, " $1").trim().toUpperCase());
   });
 }
-//drawBgLabels();
 
-/* ── Force simulation ────────────────────────────────────────────────────── */
-function buildForces() {
-  const rc = regionCenters();
-  sim
-    .force("link",    d3.forceLink(LINKS).id(d => d.id).distance(62).strength(.5))
-    .force("charge",  d3.forceManyBody().strength(-110))
-    .force("collide", d3.forceCollide().radius(d => nr(d) + 14))
-    .force("x",       d3.forceX(d => rc[d.region][0]).strength(.38))
-    .force("y",       d3.forceY(d => rc[d.region][1]).strength(.38));
-}
+/* ── component packing (zone-aware) ─────────────────────────────────────── */
+function compR(n) { return Math.max(30, n * 11); }
 
-const sim = d3.forceSimulation(NODES);
-buildForces();
-
-/* ── Draw links ──────────────────────────────────────────────────────────── */
-const linkSel = root.append("g")
-  .selectAll("line").data(LINKS).join("line")
-  .attr("class", "link")
-  .attr("stroke", d => COLORS[d.region] || "#999")
-  .attr("stroke-width", 1.8)
-  .each(function(d) {
-    const rid = d.region.replace(/[^a-z0-9]/gi, "_");
-    d3.select(this)
-      .attr("marker-end",   `url(#ae_${rid})`)
-      .attr("marker-start", `url(#as_${rid})`);
+function packZone(zone, compIds) {
+  /* Shelf-pack clusters within a rectangular zone, sorted largest first. */
+  const gap    = 24;
+  const sorted = [...compIds].sort((a, b) => COMP_SIZES[b] - COMP_SIZES[a]);
+  const rows   = [[]], rowW = [0];
+  sorted.forEach(cid => {
+    const r      = compR(COMP_SIZES[cid]);
+    const needed = 2*r + (rows[rows.length-1].length ? gap : 0);
+    if (rowW[rows.length-1] + needed > zone.w && rows[rows.length-1].length > 0) {
+      rows.push([]); rowW.push(0);
+    }
+    rows[rows.length-1].push(cid);
+    rowW[rows.length-1] += needed;
   });
 
-/* ── Draw nodes ──────────────────────────────────────────────────────────── */
+  const rowHeights = rows.map(row => 2 * Math.max(...row.map(cid => compR(COMP_SIZES[cid]))));
+  const totalH     = rowHeights.reduce((s, h) => s+h, 0) + gap*(rows.length-1);
+  const centroids  = {};
+  /* Fix: track the TOP of each row (not centroid), so rows don't drift downward */
+  let rowTop = zone.y + Math.max(0, (zone.h - totalH) / 2);
+
+  rows.forEach((row, ri) => {
+    const rh = rowHeights[ri];
+    const rw = row.reduce((s, cid) => s + 2*compR(COMP_SIZES[cid]), 0) + gap*(row.length-1);
+    let x    = zone.x + Math.max(0, (zone.w - rw) / 2) + compR(COMP_SIZES[row[0]]);
+    row.forEach(cid => {
+      centroids[cid] = [x, rowTop + rh / 2];   /* centroid = row_top + half height */
+      x += 2 * compR(COMP_SIZES[cid]) + gap;
+    });
+    rowTop += rh + gap;
+  });
+  return centroids;
+}
+
+function packComps() {
+  const zones = regionZones();
+  /* Group comp ids by their majority region */
+  const byRegion = {};
+  COMP_REGIONS.forEach((region, cid) => {
+    (byRegion[region] = byRegion[region] || []).push(cid);
+  });
+  const centroids = {};
+  Object.entries(byRegion).forEach(([region, compIds]) => {
+    const zone = zones[region];
+    if (!zone) return;
+    Object.assign(centroids, packZone(zone, compIds));
+  });
+  return centroids;
+}
+
+let compCentroids = packComps();
+drawZones();   /* called here so ellipses are sized from actual centroid positions */
+
+/* ── pre-position nodes in circles within their component ────────────────── */
+function prePosition() {
+  const byComp = {};
+  NODES.forEach(d => { (byComp[d.component] = byComp[d.component] || []).push(d); });
+  Object.entries(byComp).forEach(([cid, nodes]) => {
+    const [cx, cy] = compCentroids[+cid];
+    const n = nodes.length;
+    const r = n === 1 ? 0 : Math.max(14, n * 8);
+    nodes.forEach((d, i) => {
+      d.x = cx + r * Math.cos((2*Math.PI*i/n) - Math.PI/2);
+      d.y = cy + r * Math.sin((2*Math.PI*i/n) - Math.PI/2);
+    });
+  });
+}
+prePosition();
+
+/* ── hull layer (circles per cluster) ───────────────────────────────────── */
+const hullLayer = root.append("g");
+function updateHulls() {
+  const byComp = {};
+  NODES.forEach(d => { (byComp[d.component] = byComp[d.component] || []).push(d); });
+  hullLayer.selectAll(".hull").remove();
+  Object.entries(byComp).forEach(([cid, nodes]) => {
+    if (nodes.length < 2) return;
+    const regionCounts = {};
+    nodes.forEach(d => { regionCounts[d.region] = (regionCounts[d.region]||0)+1; });
+    const topRegion = Object.entries(regionCounts).sort((a,b)=>b[1]-a[1])[0][0];
+    const col = COLORS[topRegion] || "#999";
+    /* use bounding circle (centroid + max distance) so shape stays circular */
+    const cx = d3.mean(nodes, d => d.x);
+    const cy = d3.mean(nodes, d => d.y);
+    const r  = d3.max(nodes, d => Math.sqrt((d.x-cx)**2+(d.y-cy)**2)) + 22;
+    hullLayer.append("circle")
+      .attr("class","hull")
+      .attr("data-region", topRegion)
+      .attr("cx", cx).attr("cy", cy).attr("r", r)
+      .attr("fill", col).attr("stroke", col);
+  });
+}
+
+/* ── link layer ──────────────────────────────────────────────────────────── */
+const linkSel = root.append("g")
+  .selectAll("path").data(LINKS).join("path")
+  .attr("class","link")
+  .attr("stroke", d => COLORS[d.region]||"#999")
+  .attr("stroke-width", 2);
+
+/* ── node layer ──────────────────────────────────────────────────────────── */
 const nodeSel = root.append("g")
-  .selectAll(".ngrp").data(NODES).join("g").attr("class", "ngrp")
-  .call(
-    d3.drag()
-      .on("start", (e, d) => { if (!e.active) sim.alphaTarget(.3).restart(); d.fx = d.x; d.fy = d.y; })
-      .on("drag",  (e, d) => { d.fx = e.x; d.fy = e.y; })
-      .on("end",   (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; })
+  .selectAll(".ngrp").data(NODES).join("g").attr("class","ngrp")
+  .call(d3.drag()
+    .on("start",(e,d)=>{ if(!e.active) sim.alphaTarget(.3).restart(); d.fx=d.x; d.fy=d.y; })
+    .on("drag", (e,d)=>{ d.fx=e.x; d.fy=e.y; })
+    .on("end",  (e,d)=>{ if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; })
   )
   .on("click",     nodeClick)
   .on("mouseover", showTip)
@@ -247,108 +321,108 @@ const nodeSel = root.append("g")
 
 nodeSel.append("circle")
   .attr("r",            nr)
-  .attr("fill",         d => COLORS[d.region] || "#999")
-  .attr("stroke",       d => d3.color(COLORS[d.region] || "#999").darker(.55))
-  .attr("fill-opacity", .88);
+  .attr("fill",         d => COLORS[d.region]||"#999")
+  .attr("stroke",       d => d3.color(COLORS[d.region]||"#999").darker(.55))
+  .attr("fill-opacity", .9);
 
-/* Label below the circle */
 nodeSel.append("text")
   .text(d => d.id)
-  .attr("text-anchor", "middle")
-  .attr("y", d => nr(d) + 9)          /* sit just below circle edge */
-  .attr("fill", "#222")
-  .attr("fill-opacity", .85)
-  .style("font-size", "8.5px")
-  .style("font-weight", "600")
-  .style("paint-order", "stroke")     /* white halo for legibility */
-  .style("stroke", "#f0ede6")
-  .style("stroke-width", "2.5px")
-  .style("stroke-linejoin", "round");
+  .attr("text-anchor","middle")
+  .attr("y", d => nr(d)+9)
+  .attr("fill","#222").attr("fill-opacity",.85)
+  .style("font-size","8.5px")
+  .style("paint-order","stroke")
+  .style("stroke","#f0ede6")
+  .style("stroke-width","2.5px")
+  .style("stroke-linejoin","round");
 
-/* ── Tooltip ─────────────────────────────────────────────────────────────── */
+/* ── tooltip ─────────────────────────────────────────────────────────────── */
 const tip = document.getElementById("tip");
-function showTip(e, d) {
-  const reg = d.region.replace(/([A-Z])/g, " $1").trim();
-  tip.innerHTML = `<b>${d.id}</b><span>${reg} &middot; ${d.degree} joking relation${d.degree !== 1 ? "s" : ""}</span>`;
-  tip.style.display = "block";
+function showTip(e,d){
+  const reg = d.region.replace(/([A-Z])/g," $1").trim();
+  tip.innerHTML=`<b>${d.id}</b><span>${reg} · ${d.degree} joking relation${d.degree!==1?"s":""}</span>`;
+  tip.style.display="block";
 }
-function moveTip(e) {
-  tip.style.left = (e.offsetX + 16) + "px";
-  tip.style.top  = (e.offsetY - 42) + "px";
-}
-function hideTip() { tip.style.display = "none"; }
+function moveTip(e){ tip.style.left=(e.offsetX+16)+"px"; tip.style.top=(e.offsetY-42)+"px"; }
+function hideTip(){ tip.style.display="none"; }
 
-/* ── Click-to-highlight ──────────────────────────────────────────────────── */
+/* ── click highlight ─────────────────────────────────────────────────────── */
 let sel = null;
-
-function sid(l) { return typeof l.source === "object" ? l.source.id : l.source; }
-function tid(l) { return typeof l.target === "object" ? l.target.id : l.target; }
-
-function neighbors(id) {
-  const s = new Set();
-  LINKS.forEach(l => {
-    if (sid(l) === id) s.add(tid(l));
-    if (tid(l) === id) s.add(sid(l));
-  });
+function sid(l){ return typeof l.source==="object"?l.source.id:l.source; }
+function tid(l){ return typeof l.target==="object"?l.target.id:l.target; }
+function neighbors(id){
+  const s=new Set();
+  LINKS.forEach(l=>{ if(sid(l)===id)s.add(tid(l)); if(tid(l)===id)s.add(sid(l)); });
   return s;
 }
-
-function nodeClick(e, d) {
+function nodeClick(e,d){
   e.stopPropagation();
-  if (sel === d.id) { clearSel(); return; }
-  sel = d.id;
-  const nbrs = neighbors(d.id);
-  nodeSel.classed("dim", n => n.id !== d.id && !nbrs.has(n.id));
-  linkSel
-    .classed("dim", l => sid(l) !== d.id && tid(l) !== d.id)
-    .classed("lit", l => sid(l) === d.id || tid(l) === d.id);
+  if(sel===d.id){ clearSel(); return; }
+  sel=d.id;
+  const nbrs=neighbors(d.id);
+  nodeSel.classed("dim",n=>n.id!==d.id&&!nbrs.has(n.id));
+  linkSel.classed("dim",l=>sid(l)!==d.id&&tid(l)!==d.id)
+         .classed("lit",l=>sid(l)===d.id||tid(l)===d.id);
+}
+svg.on("click",clearSel);
+function clearSel(){
+  sel=null;
+  nodeSel.classed("dim",false);
+  linkSel.classed("dim",false).classed("lit",false);
+  refreshVis();
 }
 
-svg.on("click", clearSel);
-
-function clearSel() {
-  sel = null;
-  nodeSel.classed("dim", false);
-  linkSel.classed("dim", false).classed("lit", false);
-  refreshVisibility();
-}
-
-/* ── Region visibility ───────────────────────────────────────────────────── */
-function refreshVisibility() {
-  const visNodes = new Set();
-  LINKS.forEach(l => {
-    if (active.has(l.region)) {
-      visNodes.add(sid(l));
-      visNodes.add(tid(l));
-    }
-  });
+/* ── region visibility ───────────────────────────────────────────────────── */
+function refreshVis(){
+  const visN=new Set();
+  LINKS.forEach(l=>{ if(active.has(l.region)){ visN.add(sid(l)); visN.add(tid(l)); }});
   linkSel.style("display", d => active.has(d.region) ? null : "none");
-  nodeSel.style("display", d => visNodes.has(d.id)   ? null : "none");
+  nodeSel.style("display", d => visN.has(d.id)       ? null : "none");
+  /* hide zone ellipses, zone labels, and cluster hulls for inactive regions */
+  zoneLayer.selectAll("[data-region]")
+    .style("display", function(){ return active.has(d3.select(this).attr("data-region")) ? null : "none"; });
+  hullLayer.selectAll("[data-region]")
+    .style("display", function(){ return active.has(d3.select(this).attr("data-region")) ? null : "none"; });
 }
 
-/* ── Simulation tick ─────────────────────────────────────────────────────── */
-sim.on("tick", () => {
-  linkSel.each(function(d) {
-    const dx   = d.target.x - d.source.x;
-    const dy   = d.target.y - d.source.y;
-    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    const rs   = nr(d.source) + 2;
-    const rt   = nr(d.target) + 2;
-    d3.select(this)
-      .attr("x1", d.source.x + (dx / dist) * rs)
-      .attr("y1", d.source.y + (dy / dist) * rs)
-      .attr("x2", d.target.x - (dx / dist) * rt)
-      .attr("y2", d.target.y - (dy / dist) * rt);
-  });
-  nodeSel.attr("transform", d => `translate(${d.x},${d.y})`);
-});
+/* ── force simulation ────────────────────────────────────────────────────── */
+const sim = d3.forceSimulation(NODES)
+  .force("link",    d3.forceLink(LINKS).id(d=>d.id).distance(44).strength(.55))
+  .force("charge",  d3.forceManyBody().strength(-60))
+  .force("collide", d3.forceCollide().radius(d=>nr(d)+10))
+  .force("x",       d3.forceX(d=>compCentroids[d.component][0]).strength(.70))
+  .force("y",       d3.forceY(d=>compCentroids[d.component][1]).strength(.70));
 
-/* ── Resize ──────────────────────────────────────────────────────────────── */
-window.addEventListener("resize", () => {
-  W = wrap.clientWidth; H = wrap.clientHeight;
-  //drawBgLabels();
-  buildForces();
-  sim.alpha(.5).restart();
+/* ── tick ────────────────────────────────────────────────────────────────── */
+let tickN=0;
+sim.on("tick",()=>{
+  tickN++;
+  linkSel.each(function(d){
+    const sx=d.source.x,sy=d.source.y,tx=d.target.x,ty=d.target.y;
+    const dx=tx-sx,dy=ty-sy,dist=Math.sqrt(dx*dx+dy*dy)||1;
+    const rs=nr(d.source)+2, rt=nr(d.target)+2;
+    const x1=sx+(dx/dist)*rs, y1=sy+(dy/dist)*rs;
+    const x2=tx-(dx/dist)*rt, y2=ty-(dy/dist)*rt;
+    const bend=Math.min(dist*.22,18);
+    const mx=(x1+x2)/2-(dy/dist)*bend;
+    const my=(y1+y2)/2+(dx/dist)*bend;
+    d3.select(this).attr("d",`M${x1},${y1} Q${mx},${my} ${x2},${y2}`);
+  });
+  nodeSel.attr("transform",d=>`translate(${d.x},${d.y})`);
+  if(tickN%25===0) updateHulls();
+});
+sim.on("end", updateHulls);
+
+/* ── resize ──────────────────────────────────────────────────────────────── */
+window.addEventListener("resize",()=>{
+  W=wrap.clientWidth; H=wrap.clientHeight;
+  compCentroids=packComps();
+  drawZones();
+  sim
+    .force("x",d3.forceX(d=>compCentroids[d.component][0]).strength(.70))
+    .force("y",d3.forceY(d=>compCentroids[d.component][1]).strength(.70))
+    .alpha(.6).restart();
+  updateHulls();
 });
 </script>
 </body>
